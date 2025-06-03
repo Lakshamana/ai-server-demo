@@ -1,22 +1,33 @@
 package br.com.firedev.core_ai_demo.controller;
 
+import static br.com.firedev.core_ai_demo.singleton.EmbeddingModel.embeddingModel;
 import static br.com.firedev.core_ai_demo.singleton.EmbeddingStore.embeddingStore;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.firedev.core_ai_demo.context.QueryContextHolder;
+import br.com.firedev.core_ai_demo.dto.PromptChatRequest;
 import br.com.firedev.core_ai_demo.interfaces.Assistant;
+import dev.langchain4j.data.message.TextContent;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
+import dev.langchain4j.rag.AugmentationResult;
+import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
+import dev.langchain4j.store.embedding.EmbeddingMatch;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import reactor.core.publisher.Flux;
 
 @RestController
@@ -41,33 +52,71 @@ public class ChatController {
         .streamingChatModel(this.model)
         .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
         .contentRetriever(EmbeddingStoreContentRetriever.from(embeddingStore))
+        .retrievalAugmentor(query -> {
+          List<TextSegment> userDocs = QueryContextHolder.getContext();
+
+          if (userDocs != null && !userDocs.isEmpty()) {
+            return AugmentationResult.builder()
+                .contents(
+                    userDocs.stream()
+                        .map(m -> Content.from(m))
+                        .collect(Collectors.toList()))
+                .build();
+          }
+
+          String queryText = ((TextContent) ((UserMessage) query.chatMessage()).contents()).text();
+          List<EmbeddingMatch<TextSegment>> matches = embeddingStore.search(
+              EmbeddingSearchRequest.builder()
+                  .queryEmbedding(embeddingModel.embed(queryText).content())
+                  .maxResults(10)
+                  .build())
+              .matches();
+
+          return AugmentationResult.builder()
+              .contents(
+                  matches.stream()
+                      .map(m -> Content.from(m.embedded()))
+                      .collect(Collectors.toList()))
+              .build();
+        })
         .build();
   }
 
   @GetMapping
-  public Flux<ServerSentEvent<Object>> chat(@RequestParam String prompt) {
+  public Flux<ServerSentEvent<Object>> chat(PromptChatRequest request) {
     String chatId = UUID.randomUUID().toString();
 
     logger.info("Chat id: " + chatId);
 
-    return Flux.create(emitter -> {
-      assistant.chat(prompt)
-          .onPartialResponse(partial -> {
-            emitter.next(ServerSentEvent.builder()
-                .event("eventId")
-                .id(UUID.randomUUID().toString())
-                .data(partial)
-                .build());
-          })
-          .onCompleteResponse(completeResponse -> {
-            emitter.next(ServerSentEvent.builder()
-                .event("chat-token-" + chatId)
-                .id(completeResponse.id())
-                .data(completeResponse.aiMessage().text())
-                .build());
-          })
-          .onError(emitter::error)
-          .start();
-    });
+    List<String> chunks = request.getChunks();
+    if (!chunks.isEmpty()) {
+      QueryContextHolder.setContext(
+          chunks.stream()
+              .map(TextSegment::from)
+              .collect(Collectors.toList()));
+    }
+
+    return Flux
+        .create(emitter -> {
+          assistant.chat(request.getPrompt())
+              .onPartialResponse(partial -> {
+                emitter.next(ServerSentEvent.builder()
+                    .event("eventId")
+                    .id(UUID.randomUUID().toString())
+                    .data(partial)
+                    .build());
+              })
+              .onCompleteResponse(completeResponse -> {
+                emitter.next(ServerSentEvent.builder()
+                    .event("chat-token-" + chatId)
+                    .id(completeResponse.id())
+                    .data(completeResponse.aiMessage().text())
+                    .build());
+
+                QueryContextHolder.clear();
+              })
+              .onError(emitter::error)
+              .start();
+        });
   }
 }

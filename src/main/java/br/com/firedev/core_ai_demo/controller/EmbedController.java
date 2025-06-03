@@ -1,5 +1,6 @@
 package br.com.firedev.core_ai_demo.controller;
 
+import static br.com.firedev.core_ai_demo.singleton.EmbeddingModel.embeddingModel;
 import static br.com.firedev.core_ai_demo.singleton.EmbeddingStore.embeddingStore;
 
 import java.time.Duration;
@@ -22,11 +23,8 @@ import br.com.firedev.core_ai_demo.dto.QueryRequest;
 import br.com.firedev.core_ai_demo.dto.QueryResultItem;
 import br.com.firedev.core_ai_demo.utils.Partition;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModelFactory;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
-import dev.langchain4j.store.embedding.chroma.ChromaEmbeddingStore;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -36,14 +34,10 @@ import reactor.core.scheduler.Schedulers;
 public class EmbedController {
 
   private final Logger logger;
-  private final ChromaEmbeddingStore chromaEmbeddingStore;
-  private final EmbeddingModel embeddingModel;
   private final int chunkSize = 20;
 
   public EmbedController() {
     this.logger = LoggerFactory.getLogger(EmbedController.class);
-    this.embeddingModel = new AllMiniLmL6V2EmbeddingModelFactory().create();
-    this.chromaEmbeddingStore = embeddingStore;
   }
 
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -66,7 +60,7 @@ public class EmbedController {
   public List<QueryResultItem> query(QueryRequest request) {
     logger.info("Listing embeddings: {}", request.toString());
 
-    List<EmbeddingMatch<TextSegment>> matches = this.chromaEmbeddingStore.search(
+    List<EmbeddingMatch<TextSegment>> matches = embeddingStore.search(
         EmbeddingSearchRequest.builder()
             .queryEmbedding(embeddingModel.embed(request.getQuery()).content())
             .maxResults(request.getMaxResults())
@@ -92,7 +86,7 @@ public class EmbedController {
             textSegment -> Mono.fromRunnable(
                 () -> {
                   logger.info("Saving chunk: {}", textSegment.text());
-                  chromaEmbeddingStore.add(embeddingModel.embed(textSegment).content(), textSegment);
+                  embeddingStore.add(embeddingModel.embed(textSegment).content(), textSegment);
                 }).subscribeOn(Schedulers.boundedElastic()))
         .then();
   }
