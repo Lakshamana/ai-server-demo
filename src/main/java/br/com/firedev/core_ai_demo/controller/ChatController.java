@@ -3,6 +3,7 @@ package br.com.firedev.core_ai_demo.controller;
 import static br.com.firedev.core_ai_demo.singleton.EmbeddingModel.embeddingModel;
 import static br.com.firedev.core_ai_demo.singleton.EmbeddingStore.embeddingStore;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -17,13 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.firedev.core_ai_demo.context.QueryContextHolder;
 import br.com.firedev.core_ai_demo.dto.PromptChatRequest;
 import br.com.firedev.core_ai_demo.interfaces.Assistant;
+import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
-import dev.langchain4j.rag.AugmentationResult;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
@@ -51,20 +52,29 @@ public class ChatController {
     this.assistant = AiServices.builder(Assistant.class)
         .streamingChatModel(this.model)
         .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
-        .retrievalAugmentor(query -> {
+        .contentRetriever(query -> {
           List<TextSegment> userProvidedDocs = QueryContextHolder.getContext();
+          ChatMessage message = query.metadata().chatMessage();
 
           if (userProvidedDocs != null && !userProvidedDocs.isEmpty()) {
-            return AugmentationResult.builder()
-                .chatMessage(query.chatMessage())
-                .contents(
-                    userProvidedDocs.stream()
-                        .map(Content::from)
-                        .collect(Collectors.toList()))
-                .build();
+            return userProvidedDocs.stream()
+                .map(Content::from)
+                .collect(Collectors.toList());
           }
 
-          String queryText = ((TextContent) ((UserMessage) query.chatMessage()).contents()).text();
+          if (!(message instanceof UserMessage)) {
+            return Collections.emptyList();
+          }
+
+          UserMessage userMessage = (UserMessage) message;
+          List<dev.langchain4j.data.message.Content> contents = userMessage.contents();
+
+          if (contents.isEmpty() || !(contents.get(0) instanceof TextContent)) {
+            return Collections.emptyList();
+          }
+
+          String queryText = query.text();
+
           List<EmbeddingMatch<TextSegment>> matches = embeddingStore.search(
               EmbeddingSearchRequest.builder()
                   .queryEmbedding(embeddingModel.embed(queryText).content())
@@ -72,12 +82,9 @@ public class ChatController {
                   .build())
               .matches();
 
-          return AugmentationResult.builder()
-              .contents(
-                  matches.stream()
-                      .map(m -> Content.from(m.embedded()))
-                      .collect(Collectors.toList()))
-              .build();
+          return matches.stream()
+              .map(m -> Content.from(m.embedded()))
+              .collect(Collectors.toList());
         })
         .build();
   }
