@@ -9,7 +9,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,7 +25,6 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.rag.AugmentationResult;
 import dev.langchain4j.rag.content.Content;
-import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
@@ -51,15 +51,15 @@ public class ChatController {
     this.assistant = AiServices.builder(Assistant.class)
         .streamingChatModel(this.model)
         .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
-        .contentRetriever(EmbeddingStoreContentRetriever.from(embeddingStore))
         .retrievalAugmentor(query -> {
-          List<TextSegment> userDocs = QueryContextHolder.getContext();
+          List<TextSegment> userProvidedDocs = QueryContextHolder.getContext();
 
-          if (userDocs != null && !userDocs.isEmpty()) {
+          if (userProvidedDocs != null && !userProvidedDocs.isEmpty()) {
             return AugmentationResult.builder()
+                .chatMessage(query.chatMessage())
                 .contents(
-                    userDocs.stream()
-                        .map(m -> Content.from(m))
+                    userProvidedDocs.stream()
+                        .map(Content::from)
                         .collect(Collectors.toList()))
                 .build();
           }
@@ -68,7 +68,7 @@ public class ChatController {
           List<EmbeddingMatch<TextSegment>> matches = embeddingStore.search(
               EmbeddingSearchRequest.builder()
                   .queryEmbedding(embeddingModel.embed(queryText).content())
-                  .maxResults(10)
+                  .maxResults(5)
                   .build())
               .matches();
 
@@ -82,14 +82,15 @@ public class ChatController {
         .build();
   }
 
-  @GetMapping
-  public Flux<ServerSentEvent<Object>> chat(PromptChatRequest request) {
+  @PostMapping
+  public Flux<ServerSentEvent<Object>> chat(@RequestBody PromptChatRequest request) {
     String chatId = UUID.randomUUID().toString();
 
     logger.info("Chat id: " + chatId);
+    logger.info("Request: " + request.toString());
 
     List<String> chunks = request.getChunks();
-    if (!chunks.isEmpty()) {
+    if (chunks != null && !chunks.isEmpty()) {
       QueryContextHolder.setContext(
           chunks.stream()
               .map(TextSegment::from)

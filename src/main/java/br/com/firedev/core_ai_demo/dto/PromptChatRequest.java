@@ -21,4 +21,9 @@ public class PromptChatRequest {
   public void setChunks(List<String> chunks) {
     this.chunks = chunks;
   }
+
+  @Override
+  public String toString() {
+    return "PromptChatRequest[prompt=" + prompt + ", chunks=" + chunks + "]";
+  }
 }
