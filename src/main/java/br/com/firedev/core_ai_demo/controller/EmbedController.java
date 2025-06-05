@@ -1,7 +1,7 @@
 package br.com.firedev.core_ai_demo.controller;
 
-import static br.com.firedev.core_ai_demo.singleton.EmbeddingModel.embeddingModel;
-import static br.com.firedev.core_ai_demo.singleton.EmbeddingStore.embeddingStore;
+import static br.com.firedev.core_ai_demo.singleton.EmbeddingConfiguration.EMBEDDING_MODEL;
+import static br.com.firedev.core_ai_demo.singleton.EmbeddingConfiguration.EMBEDDING_STORE;
 
 import java.time.Duration;
 import java.util.List;
@@ -60,9 +60,9 @@ public class EmbedController {
   public List<QueryResultItem> query(QueryRequest request) {
     logger.info("Listing embeddings: {}", request.toString());
 
-    List<EmbeddingMatch<TextSegment>> matches = embeddingStore.search(
+    List<EmbeddingMatch<TextSegment>> matches = EMBEDDING_STORE.search(
         EmbeddingSearchRequest.builder()
-            .queryEmbedding(embeddingModel.embed(request.getQuery()).content())
+            .queryEmbedding(EMBEDDING_MODEL.embed(request.getQuery()).content())
             .maxResults(request.getMaxResults())
             .build())
         .matches();
@@ -86,7 +86,7 @@ public class EmbedController {
             textSegment -> Mono.fromRunnable(
                 () -> {
                   logger.info("Saving chunk: {}", textSegment.text());
-                  embeddingStore.add(embeddingModel.embed(textSegment).content(), textSegment);
+                  EMBEDDING_STORE.add(EMBEDDING_MODEL.embed(textSegment).content(), textSegment);
                 }).subscribeOn(Schedulers.boundedElastic()))
         .then();
   }

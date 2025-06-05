@@ -1,7 +1,7 @@
 package br.com.firedev.core_ai_demo.controller;
 
-import static br.com.firedev.core_ai_demo.singleton.EmbeddingModel.embeddingModel;
-import static br.com.firedev.core_ai_demo.singleton.EmbeddingStore.embeddingStore;
+import static br.com.firedev.core_ai_demo.singleton.EmbeddingConfiguration.EMBEDDING_STORE;
+import static br.com.firedev.core_ai_demo.singleton.EmbeddingConfiguration.EMBEDDING_MODEL;
 
 import java.util.Collections;
 import java.util.List;
@@ -75,9 +75,9 @@ public class ChatController {
 
           String queryText = query.text();
 
-          List<EmbeddingMatch<TextSegment>> matches = embeddingStore.search(
+          List<EmbeddingMatch<TextSegment>> matches = EMBEDDING_STORE.search(
               EmbeddingSearchRequest.builder()
-                  .queryEmbedding(embeddingModel.embed(queryText).content())
+                  .queryEmbedding(EMBEDDING_MODEL.embed(queryText).content())
                   .maxResults(5)
                   .build())
               .matches();
