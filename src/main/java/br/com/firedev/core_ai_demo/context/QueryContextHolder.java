@@ -2,16 +2,16 @@ package br.com.firedev.core_ai_demo.context;
 
 import java.util.List;
 
-import dev.langchain4j.data.segment.TextSegment;
+import br.com.firedev.core_ai_demo.dto.CodeChunk;
 
 public class QueryContextHolder {
-  private static final ThreadLocal<List<TextSegment>> threadLocalDocs = new ThreadLocal<>();
+  private static final ThreadLocal<List<CodeChunk>> threadLocalDocs = new ThreadLocal<>();
 
-  public static void setContext(List<TextSegment> docs) {
+  public static void setContext(List<CodeChunk> docs) {
     threadLocalDocs.set(docs);
   }
 
-  public static List<TextSegment> getContext() {
+  public static List<CodeChunk> getContext() {
     return threadLocalDocs.get();
   }
 

@@ -2,9 +2,10 @@ package br.com.firedev.core_ai_demo.dto;
 
 import java.util.List;
 
-public class PromptChatRequest {
+public class ChatRequest {
   String prompt;
-  List<String> chunks;
+  Long chatId;
+  List<CodeChunk> chunks;
 
   public String getPrompt() {
     return prompt;
@@ -14,12 +15,20 @@ public class PromptChatRequest {
     this.prompt = prompt;
   }
 
-  public List<String> getChunks() {
+  public List<CodeChunk> getChunks() {
     return chunks;
   }
 
-  public void setChunks(List<String> chunks) {
+  public void setChunks(List<CodeChunk> chunks) {
     this.chunks = chunks;
+  }
+
+  public void setChatId(Long chatId) {
+    this.chatId = chatId;
+  }
+
+  public Long getChatId() {
+    return chatId;
   }
 
   @Override

@@ -100,7 +100,7 @@ public class EmbeddingResult {
     return new EmbeddingResult()
         .id(projectId)
         .totalChunks(totalChunks)
-        .status("completed");
+        .status("batch_complete");
   }
 
   public String getId() {

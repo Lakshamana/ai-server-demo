@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
 
-import br.com.firedev.core_ai_demo.dto.CodeChunkRequest;
+import br.com.firedev.core_ai_demo.dto.CodeChunk;
 import br.com.firedev.core_ai_demo.dto.EmbeddingResult;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -30,13 +30,13 @@ public class EmbeddingService {
 
   public EmbeddingResult embedPrompt(String text) {
     return new EmbeddingResult()
-      .id("embedded-prompt")
-      .status("completed")
-      .content(text)
-      .embedding(EMBEDDING_MODEL.embed(text).content().vectorAsList());
+        .id("embedded-prompt")
+        .status("completed")
+        .content(text)
+        .embedding(EMBEDDING_MODEL.embed(text).content().vectorAsList());
   }
 
-  public Flux<EmbeddingResult> processChunksStreamWithProgress(String projectId, List<CodeChunkRequest> chunks) {
+  public Flux<EmbeddingResult> processChunksStreamWithProgress(String projectId, List<CodeChunk> chunks) {
     processedCount.set(0);
     final int totalChunks = chunks.size();
 
@@ -47,7 +47,7 @@ public class EmbeddingService {
         .doOnError(error -> System.err.println("Progress stream error: " + error.getMessage()));
   }
 
-  private Flux<EmbeddingResult> processChunkWithProgressAsync(CodeChunkRequest chunk, int totalChunks) {
+  private Flux<EmbeddingResult> processChunkWithProgressAsync(CodeChunk chunk, int totalChunks) {
     return Mono.fromCallable(() -> {
       // Emit processing status
       int currentProcessed = processedCount.get();
@@ -81,10 +81,9 @@ public class EmbeddingService {
                 .subscribeOn(embeddingScheduler))
         .timeout(Duration.ofMinutes(3))
         .onErrorReturn(EmbeddingResult.error(
-              chunk.getId(),
-              "Processing timeout",
-              totalChunks,
-              processedCount.get()
-              ));
+            chunk.getId(),
+            "Processing timeout",
+            totalChunks,
+            processedCount.get()));
   }
 }
