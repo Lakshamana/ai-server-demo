@@ -30,7 +30,7 @@ public class EmbeddingController {
     this.logger = LoggerFactory.getLogger(EmbeddingController.class);
   }
 
-  @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PostMapping(value = "/embed-prompt", consumes = MediaType.APPLICATION_JSON_VALUE)
   public EmbeddingResult embedPrompt(@RequestBody SingleEmbeddingRequest request) {
     logger.info("Received single embedding request: {}", request);
 
@@ -38,7 +38,7 @@ public class EmbeddingController {
   }
 
   @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-  public Flux<ServerSentEvent<EmbeddingResult>> streamEmbeddingsHybrid(
+  public Flux<ServerSentEvent<EmbeddingResult>> streamEmbeddings(
       @RequestBody StreamingEmbeddingRequest request) {
 
     logger.info("Received stream request: {}", request);
@@ -52,7 +52,7 @@ public class EmbeddingController {
               .event(eventType)
               .data(result)
               .comment(EventUtils.createProgressComment(result))
-              .build();
+                .build();
         })
         .doOnError(error -> System.err.println("Streaming error:" + error.getMessage()));
   }

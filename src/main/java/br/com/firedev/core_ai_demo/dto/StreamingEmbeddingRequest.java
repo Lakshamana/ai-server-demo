@@ -4,12 +4,12 @@ import java.util.List;
 
 public class StreamingEmbeddingRequest {
   private String projectId;
-  private List<CodeChunkRequest> chunks;
+  private List<CodeChunk> chunks;
 
   public StreamingEmbeddingRequest() {
   }
 
-  public StreamingEmbeddingRequest(String projectId, List<CodeChunkRequest> chunks) {
+  public StreamingEmbeddingRequest(String projectId, List<CodeChunk> chunks) {
     this.projectId = projectId;
     this.chunks = chunks;
   }
@@ -22,11 +22,11 @@ public class StreamingEmbeddingRequest {
     this.projectId = projectId;
   }
 
-  public List<CodeChunkRequest> getChunks() {
+  public List<CodeChunk> getChunks() {
     return chunks;
   }
 
-  public void setChunks(List<CodeChunkRequest> chunks) {
+  public void setChunks(List<CodeChunk> chunks) {
     this.chunks = chunks;
   }
 
