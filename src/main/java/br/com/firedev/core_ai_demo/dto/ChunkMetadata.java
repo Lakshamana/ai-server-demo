@@ -7,6 +7,7 @@ public class ChunkMetadata {
   private int startLine;
   private int endLine;
   private String language;
+  private String chunkingType;
 
   public ChunkMetadata() {
   }
@@ -72,5 +73,13 @@ public class ChunkMetadata {
 
   public void setLanguage(String language) {
     this.language = language;
+  }
+
+  public String getChunkingType() {
+    return chunkingType;
+  }
+
+  public void setChunkingType(String chunkingType) {
+    this.chunkingType = chunkingType;
   }
 }

@@ -56,8 +56,8 @@ public class EmbeddingService {
         .concatWith(
             Mono.fromCallable(() -> {
               try {
-                // Simulate some processing time for demo
-                Thread.sleep(100);
+                // // Simulate some processing time for demo
+                // Thread.sleep(100);
 
                 List<Float> embedding = EMBEDDING_MODEL.embed(chunk.getContent())
                     .content()
