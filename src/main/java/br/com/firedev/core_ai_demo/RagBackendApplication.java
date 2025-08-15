@@ -19,6 +19,7 @@ public class RagBackendApplication {
       @Override
       public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**").allowedOrigins("*");
+        registry.addMapping("/chat/**").allowedOrigins("*");
       }
     };
   }
