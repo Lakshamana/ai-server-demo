@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.firedev.core_ai_demo.dto.ChatRequest;
+import br.com.firedev.core_ai_demo.dto.ChatResponse;
 import br.com.firedev.core_ai_demo.dto.EmbeddingResult;
+import br.com.firedev.core_ai_demo.dto.ExplainCodeInput;
 import br.com.firedev.core_ai_demo.dto.SingleEmbeddingRequest;
 import br.com.firedev.core_ai_demo.dto.StreamingEmbeddingRequest;
 import br.com.firedev.core_ai_demo.service.AssistantService;
@@ -71,4 +73,18 @@ public class ChatController {
         .doOnError(error -> System.err.println("Streaming error:" + error.getMessage()));
   }
 
+  @PostMapping("/explain-code")
+  public ChatResponse explainCode(@RequestBody ExplainCodeInput request) {
+    String response = """
+        ## Explain Code
+        This is a sample response to explain the code.
+
+        ```javascript
+        function exemploCorrecao() {
+            console.log('teste')
+        }
+        ```""";
+
+    return new ChatResponse(response);
+  }
 }
