@@ -87,4 +87,19 @@ public class ChatController {
 
     return new ChatResponse(response);
   }
+
+  @PostMapping("/code-review")
+  public ChatResponse codeReview(@RequestBody ExplainCodeInput request) {
+    String response = """
+        ## Review Code
+        This is a sample response to explain the code.
+
+        ```javascript
+        function exemploCorrecao() {
+            console.log('teste')
+        }
+        ```""";
+
+    return new ChatResponse(response);
+  }
 }
