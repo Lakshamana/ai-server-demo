@@ -39,6 +39,7 @@ public class AssistantService {
     this.model = OllamaStreamingChatModel.builder()
         .baseUrl("http://localhost:11434")
         .modelName("phi3:mini")
+        .temperature(0.2)
         .logRequests(true)
         .logResponses(true)
         .timeout(Duration.ofMinutes(3))
@@ -56,8 +57,8 @@ public class AssistantService {
 
   private String buildSystemMessage(Object provider, UserPrompt userPromptTemplate) {
     return userPromptTemplate != null
-      ? Prompts.buildSystemMessageFromUserPrompt(userPromptTemplate)
-      : Prompts.ASSISTANT_SYSTEM_MESSAGE;
+        ? Prompts.buildSystemMessageFromUserPrompt(userPromptTemplate)
+        : Prompts.ASSISTANT_SYSTEM_MESSAGE;
   }
 
   private List<Content> retrieveAndFormatContext(Query query, List<CodeChunk> context) {
@@ -142,7 +143,7 @@ public class AssistantService {
               .data(String.valueOf(1L))
               .build());
 
-          assistant.chat(request.getPrompt())
+          assistant.chat(request.getUserMsg())
               .onPartialResponse(partial -> {
                 logger.info(String.format("Partial response: '%s'", formatMessage(partial)));
                 sink.next(ServerSentEvent.<String>builder()
@@ -160,7 +161,7 @@ public class AssistantService {
         });
   }
 
-  private static String formatMessage(String event) {
+  public static String formatMessage(String event) {
     var message = (event != null)
         ? new String(event.getBytes(), StandardCharsets.UTF_8)
         : "";

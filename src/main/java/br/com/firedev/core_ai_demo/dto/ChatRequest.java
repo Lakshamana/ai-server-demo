@@ -3,7 +3,7 @@ package br.com.firedev.core_ai_demo.dto;
 import java.util.List;
 
 public class ChatRequest {
-  String prompt;
+  String userMsg;
   Long chatId;
   List<CodeChunk> chunks;
   UserPrompt userPromptTemplate;
@@ -16,12 +16,12 @@ public class ChatRequest {
     this.userPromptTemplate = userPromptTemplate;
   }
 
-  public String getPrompt() {
-    return prompt;
+  public String getUserMsg() {
+    return userMsg;
   }
 
-  public void setPrompt(String prompt) {
-    this.prompt = prompt;
+  public void setUserMsg(String userMsg) {
+    this.userMsg = userMsg;
   }
 
   public List<CodeChunk> getChunks() {
@@ -42,6 +42,6 @@ public class ChatRequest {
 
   @Override
   public String toString() {
-    return "ChatRequest[prompt=" + prompt + ", chunks=" + chunks + ", userPromptTemplate=" + userPromptTemplate + "]";
+    return "ChatRequest[userMsg=" + userMsg + ", chunks=" + chunks + ", userPromptTemplate=" + userPromptTemplate + "]";
   }
 }

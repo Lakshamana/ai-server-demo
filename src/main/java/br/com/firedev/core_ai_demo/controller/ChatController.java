@@ -1,5 +1,7 @@
 package br.com.firedev.core_ai_demo.controller;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.firedev.core_ai_demo.dto.ChatRequest;
 import br.com.firedev.core_ai_demo.dto.ChatResponse;
+import br.com.firedev.core_ai_demo.dto.CreateEntityInput;
 import br.com.firedev.core_ai_demo.dto.EmbeddingResult;
 import br.com.firedev.core_ai_demo.dto.ExplainCodeInput;
 import br.com.firedev.core_ai_demo.dto.SingleEmbeddingRequest;
@@ -19,6 +22,7 @@ import br.com.firedev.core_ai_demo.dto.StreamingEmbeddingRequest;
 import br.com.firedev.core_ai_demo.service.AssistantService;
 import br.com.firedev.core_ai_demo.service.EmbeddingService;
 import br.com.firedev.core_ai_demo.utils.EventUtils;
+import br.com.firedev.core_ai_demo.utils.StringTokenizer;
 import reactor.core.publisher.Flux;
 
 @RestController
@@ -44,6 +48,58 @@ public class ChatController {
     logger.info("Request: " + request.toString());
 
     return assistantService.chat(request);
+  }
+
+  @PostMapping(value = "/stream-mock", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+  public Flux<ServerSentEvent<String>> chatMock(@RequestBody ChatRequest request) {
+    logger.info("Chat id: " + request.getChatId());
+    logger.info("Request: " + request.toString());
+
+    String mockString = """
+        ## Mock Response
+        This is a sample response to the user input. ```javascript
+        function exemploCorrecao() {
+            console.log('teste')
+            if (true) {
+                console.log('true')
+            }
+        } ```
+
+        More text here...
+        ```javascript
+        function exemploCorrecao() {
+            console.log('teste')
+        }```
+
+        Now a third code block
+        ```javascript
+        function exemploCorrecao() {
+            console.log('teste')
+        }
+        ```
+
+        more text here...
+        """;
+
+    return Flux.create(sink -> {
+      sink.next(ServerSentEvent.<String>builder()
+          .event("chatId")
+          .id(UUID.randomUUID().toString())
+          .data(String.valueOf(1L))
+          .build());
+
+      StringTokenizer.tokenizeWithUnderscorePrefix(mockString, logger).forEach(token -> {
+        sink.next(ServerSentEvent.<String>builder()
+            .event("token")
+            .id(UUID.randomUUID().toString())
+            .data(token)
+            .build());
+
+        logger.info(token);
+      });
+
+      sink.complete();
+    });
   }
 
   @PostMapping(value = "/embed-prompt", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -92,13 +148,44 @@ public class ChatController {
   public ChatResponse codeReview(@RequestBody ExplainCodeInput request) {
     String response = """
         ## Review Code
-        This is a sample response to explain the code.
-
-        ```javascript
+        This is a sample response to explain the code. ```javascript
         function exemploCorrecao() {
             console.log('teste')
         }
         ```""";
+
+    return new ChatResponse(response);
+  }
+
+  @PostMapping("/create-entity")
+  public ChatResponse createEntity(@RequestBody CreateEntityInput request) {
+    String response = String.format("""
+        ## Create entity
+        This is a sample response to create the entity code for client type %s.
+
+        ```typescript
+        export class %s {
+          constructor(%s) {
+            // code here
+          }
+        }
+        ```""", request.getClient(), request.getEntityName(), request.getAttributes());
+
+    return new ChatResponse(response);
+  }
+
+  @PostMapping("/generate-test-suite")
+  public ChatResponse createTestSuite(@RequestBody CreateEntityInput request) {
+    String response = String.format("""
+        ## Create entity
+        This is a sample response to create the entity code for client type %s.
+        ```typescript
+        export class %s {
+          constructor(%s) {
+            // code here
+          }
+        }
+        ```""", request.getClient(), request.getEntityName(), request.getAttributes());
 
     return new ChatResponse(response);
   }
