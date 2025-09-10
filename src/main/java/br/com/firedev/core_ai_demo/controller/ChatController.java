@@ -196,4 +196,20 @@ public class ChatController {
 
     return new ChatResponse(response);
   }
+
+  @PostMapping("/generate-docs")
+  public ChatResponse generateDocs(@RequestBody CreateEntityInput request) {
+    String response = String.format("""
+        ## Unit tests
+        This is a sample response to create the entity code for client type %s.
+        ```typescript
+        export class %s {
+          constructor(%s) {
+            // code here
+          }
+        }
+        ```""", request.getClient(), request.getEntityName(), request.getAttributes());
+
+    return new ChatResponse(response);
+  }
 }
