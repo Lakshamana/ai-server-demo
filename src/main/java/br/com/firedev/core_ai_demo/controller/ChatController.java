@@ -67,16 +67,23 @@ public class ChatController {
 
         More text here...
         ```javascript
-        function exemploCorrecao() {
+        function exemploCorrecao2() {
             console.log('teste')
-        }```
+        }```## Lets add a second code block
 
         Now a third code block
         ```javascript
-        function exemploCorrecao() {
+        function exemploCorrecao3() {
             console.log('teste')
         }
-        ```
+        ``` any text right after the code block without breaking line, but with spacing
+
+        ### Now a 4th code block
+        ```javascript
+        function exemploCorrecao4() {
+            console.log('teste')
+        }```
+        any text right after the code block with proper spacing, check `exemploCorrecao4` and `exemploCorrecao3`
 
         more text here...
         """;
@@ -174,10 +181,10 @@ public class ChatController {
     return new ChatResponse(response);
   }
 
-  @PostMapping("/generate-test-suite")
+  @PostMapping("/generate-unit-tests")
   public ChatResponse createTestSuite(@RequestBody CreateEntityInput request) {
     String response = String.format("""
-        ## Create entity
+        ## Unit tests
         This is a sample response to create the entity code for client type %s.
         ```typescript
         export class %s {

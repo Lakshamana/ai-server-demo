@@ -85,6 +85,8 @@ public class StringTokenizer {
           } else if (c == '\r' && i + 1 < input.length() && input.charAt(i + 1) == '\n') {
             builder.add("_\n");
             i++; // Skip the \n
+          } if (c == ' ') {
+            currentToken.append(' ');
           }
           // Other whitespace is ignored outside code blocks
         }
