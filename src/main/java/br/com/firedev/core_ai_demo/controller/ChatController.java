@@ -17,6 +17,7 @@ import br.com.firedev.core_ai_demo.dto.ChatResponse;
 import br.com.firedev.core_ai_demo.dto.CreateEntityInput;
 import br.com.firedev.core_ai_demo.dto.EmbeddingResult;
 import br.com.firedev.core_ai_demo.dto.ExplainCodeInput;
+import br.com.firedev.core_ai_demo.dto.RefactorCodeInput;
 import br.com.firedev.core_ai_demo.dto.SingleEmbeddingRequest;
 import br.com.firedev.core_ai_demo.dto.StreamingEmbeddingRequest;
 import br.com.firedev.core_ai_demo.service.AssistantService;
@@ -197,18 +198,48 @@ public class ChatController {
     return new ChatResponse(response);
   }
 
-  @PostMapping("/generate-docs")
-  public ChatResponse generateDocs(@RequestBody CreateEntityInput request) {
+  @PostMapping("/generate-doc")
+  public ChatResponse generateDocs(@RequestBody ExplainCodeInput request) {
     String response = String.format("""
-        ## Unit tests
-        This is a sample response to create the entity code for client type %s.
+        ## generate-docs
+        This is a sample docs
         ```typescript
-        export class %s {
-          constructor(%s) {
+        export class MyClass {
+          constructor() {
+            // code here
+          }
+
+          /**
+           * This is a sample method
+           */
+          public myMethod() {
             // code here
           }
         }
-        ```""", request.getClient(), request.getEntityName(), request.getAttributes());
+        ```""", request.getFileContent());
+
+    return new ChatResponse(response);
+  }
+
+  @PostMapping("/refactor-code")
+  public ChatResponse refactorCode(@RequestBody RefactorCodeInput request) {
+    String response = String.format("""
+        ## refactor code
+        This is a sample refactor
+        ```typescript
+        export class MyClass {
+          constructor() {
+            // code here
+          }
+
+          /**
+           * This is a sample method
+           */
+          public myMethod() {
+            // code here
+          }
+        }
+        ```""", request.getFileContent());
 
     return new ChatResponse(response);
   }
